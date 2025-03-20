@@ -1,1 +1,7 @@
-# Configurações do bot
+database:
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "230600"
+  dbname: "finance_bot"
+  sslmode: "disable"
