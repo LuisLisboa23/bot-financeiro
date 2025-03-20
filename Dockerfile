@@ -1,28 +1,19 @@
-# Usar uma imagem oficial do Go como base
+# Etapa de construção do binário
 FROM golang:1.20 AS builder
 
-# Definir o diretório de trabalho dentro do container
 WORKDIR /app
 
-# Copiar os arquivos do projeto para dentro do container
+COPY go.mod go.sum ./
+RUN go mod download
+
 COPY . .
+RUN go build -o bot-financeiro ./cmd/main.go
 
-# Baixar as dependências e compilar o código
-RUN go mod download && go build -o bot-financeiro ./cmd/main.go
-
-# Criar uma imagem final menor para rodar o bot
-FROM debian:bullseye-slim
+# Etapa final: executável em uma imagem menor
+FROM debian:bookworm-slim
 
 WORKDIR /root/
 
-# Copiar o binário compilado da etapa anterior
 COPY --from=builder /app/bot-financeiro .
 
-# Definir a variável de ambiente (se necessário)
-ENV TELEGRAM_BOT_TOKEN="7984516597:AAFGo8Fceb2mUVyYLsb733W8-fnZozMRRqk"
-
-# Expor portas (se necessário, mas para um bot não costuma ser obrigatório)
-# EXPOSE 8080
-
-# Comando para executar o bot
 CMD ["./bot-financeiro"]

@@ -6,31 +6,41 @@ import (
 	"log"
 	"os"
 
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // Importa o driver do PostgreSQL
 )
 
-// ConectarDB inicializa a conexão com o PostgreSQL
+var DB *sql.DB
+
 func ConectarDB() *sql.DB {
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_SSLMODE"),
+	if DB != nil {
+		return DB
+	}
+
+	// Pegando as variáveis de ambiente
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+	sslMode := os.Getenv("DB_SSLMODE")
+
+	// Criando a string de conexão
+	dsn := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
+		user, password, host, port, dbName, sslMode,
 	)
 
-	db, err := sql.Open("postgres", connStr)
+	var err error
+	DB, err = sql.Open("postgres", dsn)
 	if err != nil {
-		log.Fatal("Erro ao conectar no banco de dados:", err)
+		log.Fatalf("Erro ao conectar ao banco: %v", err)
 	}
 
-	// Testa a conexão
-	err = db.Ping()
+	err = DB.Ping()
 	if err != nil {
-		log.Fatal("Banco de dados não respondeu:", err)
+		log.Fatalf("Banco inacessível: %v", err)
 	}
 
-	fmt.Println("✅ Conexão com PostgreSQL estabelecida!")
-	return db
+	fmt.Println("Conectado ao banco com sucesso!")
+	return DB
 }

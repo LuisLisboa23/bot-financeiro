@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/joho/godotenv"
 	"bot-financeiro/internal/bot"
@@ -9,9 +10,12 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Erro ao carregar o .env")
+	// Apenas carrega o .env se NÃO estiver rodando no Docker
+	if os.Getenv("RUNNING_IN_DOCKER") == "" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Println("Aviso: .env não encontrado, usando variáveis do sistema.")
+		}
 	}
 
 	db := database.ConectarDB()

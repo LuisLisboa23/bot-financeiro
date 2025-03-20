@@ -5,12 +5,11 @@ services:
     build: .
     container_name: bot-financeiro
     environment:
-      - TELEGRAM_BOT_TOKEN=7984516597:AAFGo8Fceb2mUVyYLsb733W8-fnZozMRRqk
-      - DATABASE_URL=postgres://postgres:230600@host.docker.internal:5432/finance_bot?sslmode=disable
+      - RUNNING_IN_DOCKER=true
     networks:
       - bot_network
     restart: always
 
 networks:
   bot_network:
-    external: true
+    driver: bridge
