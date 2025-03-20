@@ -11,6 +11,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"bot-financeiro/internal/database"
 	"bot-financeiro/internal/expenses"
+	"bot-financeiro/internal/charts"
 )
 var editingExpenses = make(map[int64]int64)
 var buscandoGastos = make(map[int64]struct {
@@ -77,7 +78,6 @@ func IniciarBot() {
 					"💰 *Gerenciar Despesas:*\n" +
 					"➖ `/add VALOR CATEGORIA [DATA]` → Adicionar uma despesa\n" +
 					"     Exemplo: `/add 50 Transporte hoje` ou `/add 100 Lazer 15-03-2025`\n" +
-					"➖ `/editar_gastos` → Editar uma despesa existente\n" +
 					"➖ `/gastos` → Listar todas as suas despesas\n" +
 					"➖ `/gastos_categoria` → Ver o total gasto por categoria\n" +
 					"➖ `/gastos_dia` → Listar despesas de hoje\n" +
@@ -91,6 +91,14 @@ func IniciarBot() {
 					"🔔 *Orçamentos e Alertas:*\n" +
 					"➖ `/definir_orcamento VALOR` → Definir um limite de gastos mensais\n" +
 					"     Exemplo: `/definir_orcamento 1000`\n\n" +
+			
+					"📊 *Gráficos de Despesas:*\n" +
+					"➖ `/grafico pizza` → Gráfico de gastos por categoria\n" +
+					"➖ `/grafico linha` → Evolução dos gastos ao longo do tempo\n" +
+					"➖ `/grafico barras` → Total de gastos por mês\n\n" +
+			
+					"⚠️ *Atenção!*\n" +
+					"O comando `/editar_gastos` *não está funcionando no momento*. Estamos trabalhando para corrigir isso!\n\n" +
 			
 					"ℹ️ *Outros Comandos:*\n" +
 					"➖ `/help` → Mostrar esta lista de comandos\n\n" +
@@ -106,7 +114,8 @@ func IniciarBot() {
 				resposta := "Olá! Eu sou seu bot financeiro. Você pode usar:\n" +
 					"/add valor categoria - Adicionar despesa\n" +
 					"/gastos - Listar despesas\n" +
-					"/remover - Remover uma despesa interativamente"
+					"/remover - Remover uma despesa interativamente\n" +
+					"Para mais detalhes /help."
 				enviarMensagem(bot, chatID, resposta)
 
 			case strings.HasPrefix(msg, "/gastos_categoria"):
@@ -343,7 +352,46 @@ func IniciarBot() {
 				msg := tgbotapi.NewMessage(chatID, "Selecione a despesa que deseja editar:")
 				msg.ReplyMarkup = keyboard
 				bot.Send(msg)
-
+			
+			case strings.HasPrefix(msg, "/grafico"):
+				args := strings.Fields(msg) // Usa Fields para evitar múltiplos espaços
+			
+				// Se o usuário não especificar um tipo de gráfico, exibe as opções e encerra
+				if len(args) < 2 {
+					enviarMensagem(bot, chatID, "📊 *Escolha um tipo de gráfico:*\n"+
+						"- `/grafico pizza` *(Gastos por categoria)*\n"+
+						"- `/grafico linha` *(Evolução dos gastos)*\n"+
+						"- `/grafico barras` *(Total por mês)*")
+					return
+				}
+			
+				var filePath string
+				var err error
+			
+				// Verifica qual gráfico foi solicitado
+				switch args[1] {
+				case "pizza":
+					filePath, err = charts.GerarGraficoPizza(chatID)
+				case "linha":
+					filePath, err = charts.GerarGraficoLinha(chatID)
+				case "barras":
+					filePath, err = charts.GerarGraficoBarras(chatID)
+				default:
+					enviarMensagem(bot, chatID, "❌ *Tipo de gráfico inválido!*\n"+
+						"Use `/grafico pizza`, `/grafico linha` ou `/grafico barras`.")
+					return
+				}
+			
+				// Se houve erro ao gerar o gráfico, exibir mensagem de erro
+				if err != nil {
+					enviarMensagem(bot, chatID, fmt.Sprintf("❌ Erro ao gerar gráfico: %s", err.Error()))
+					return
+				}
+			
+				// Enviar o gráfico gerado
+				photo := tgbotapi.NewPhoto(chatID, tgbotapi.FilePath(filePath))
+				bot.Send(photo)
+			
 			default:
 				enviarMensagem(bot, chatID, "❌ Comando não reconhecido. Use /help para ver a lista de comandos disponíveis.")
 			}

@@ -15,6 +15,18 @@ type Expense struct {
 	Date     time.Time `json:"date"`
 }
 
+type Despesa struct {
+	Date  time.Time
+	Amount float64
+	Category string
+}
+
+// Estrutura para representar gastos mensais
+type GastoMensal struct {
+	Mes   string
+	Valor float64
+}
+
 // AdicionarDespesa insere uma nova despesa no banco de dados
 func AdicionarDespesa(db *sql.DB, userID int64, amount float64, category string, date time.Time) error {
 	query := `INSERT INTO expenses (user_id, amount, category, date) VALUES ($1, $2, $3, $4)`
@@ -242,4 +254,60 @@ func BuscarDespesasPorPeriodo(db *sql.DB, chatID int64, dataInicial, dataFinal t
     }
 
     return despesas, nil
+}
+func ListarDespesasPorData(db *sql.DB, chatID int64) ([]Despesa, error) {
+	rows, err := db.Query(`
+		SELECT date, SUM(amount) as total
+		FROM expenses
+		WHERE user_id = $1
+		GROUP BY date
+		ORDER BY date ASC
+	`, chatID)
+
+	if err != nil {
+		fmt.Println("❌ Erro ao buscar despesas por data:", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var despesas []Despesa
+	for rows.Next() {
+		var despesa Despesa
+		if err := rows.Scan(&despesa.Date, &despesa.Amount); err != nil {
+			fmt.Println("❌ Erro ao escanear despesas por data:", err)
+			return nil, err
+		}
+		despesas = append(despesas, despesa)
+	}
+
+	fmt.Println("📊 Dados de despesas por data:", despesas)
+	return despesas, nil
+}
+func ListarDespesasPorMes(db *sql.DB, chatID int64) ([]GastoMensal, error) {
+	rows, err := db.Query(`
+		SELECT TO_CHAR(date, 'YYYY-MM') as mes, SUM(amount) as total
+		FROM expenses
+		WHERE user_id = $1
+		GROUP BY mes
+		ORDER BY mes ASC
+	`, chatID)
+
+	if err != nil {
+		fmt.Println("❌ Erro ao buscar despesas por mês:", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var gastosMensais []GastoMensal
+	for rows.Next() {
+		var gasto GastoMensal
+		if err := rows.Scan(&gasto.Mes, &gasto.Valor); err != nil {
+			fmt.Println("❌ Erro ao escanear despesas por mês:", err)
+			return nil, err
+		}
+		gastosMensais = append(gastosMensais, gasto)
+	}
+
+	fmt.Println("📊 Dados de despesas por mês:", gastosMensais)
+	return gastosMensais, nil
 }
