@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bot-config
+data:
+  DB_HOST: "172.17.0.1"  # IP do PostgreSQL rodando no host
+  DB_PORT: "5432"
+  DB_USER: "postgres"
+  DB_PASSWORD: "230600"
+  DB_NAME: "finance_bot"
+  DB_SSLMODE: "disable"
+  TELEGRAM_BOT_TOKEN: "7984516597:AAFGo8Fceb2mUVyYLsb733W8-fnZozMRRqk"

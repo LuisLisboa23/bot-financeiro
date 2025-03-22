@@ -4,12 +4,12 @@ services:
   bot:
     build: .
     container_name: bot-financeiro
-    environment:
-      - RUNNING_IN_DOCKER=true
+    env_file:
+      - .env
     networks:
-      - bot_network
+      - bot_network  # <-- Certifique-se de que a rede está referenciada aqui
     restart: always
 
 networks:
-  bot_network:
+  bot_network:  # <-- Certifique-se de que a rede está declarada aqui
     driver: bridge

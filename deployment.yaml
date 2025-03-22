@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bot-financeiro
+spec:
+  replicas: 1  # Número de pods do bot
+  selector:
+    matchLabels:
+      app: bot-financeiro
+  template:
+    metadata:
+      labels:
+        app: bot-financeiro
+    spec:
+      containers:
+        - name: bot
+          image: bot-financeiro:latest  # Substitua pelo nome correto da imagem
+          envFrom:
+            - configMapRef:
+                name: bot-config
+          ports:
+            - containerPort: 8080  # Caso precise expor a porta do bot
